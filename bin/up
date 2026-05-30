@@ -10,8 +10,11 @@ echo -e ${prefix}The mutagen daemon will stay running until you stop it manually
 echo -e ${prefix}Running mutagen-compose...$suffix
 
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    IP_ADDR=$(ifconfig -l | xargs -n1 ipconfig getifaddr)
+    IP_ADDR=$(ip route get 1 | awk '{for(i=1;i<=NF;i++) if($i=="src") print $(i+1)}')
 elif [[ "$OSTYPE" == "darwin"* ]]; then
-    IP_ADDR=$(ip route get 1 | awk '{print $NF;exit}')
+    IP_ADDR=$(ifconfig -l | xargs -n1 ipconfig getifaddr)
 fi
-PRIVATE_NETWORK_IP=${ADDR} mutagen-compose -f "$basedir"/docker-compose.yml up --build --detach
+if [ -z "$IP_ADDR" ]; then
+    IP_ADDR="127.0.0.1"
+fi
+PRIVATE_NETWORK_IP=${IP_ADDR} mutagen-compose -f "$basedir"/docker-compose.yml up --build --detach
